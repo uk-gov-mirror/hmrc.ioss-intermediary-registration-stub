@@ -18,17 +18,19 @@ package uk.gov.hmrc.iossintermediaryregistrationstub.controllers
 
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc.Action
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.iossintermediaryregistrationstub.connectors.RegistrationConnector
 import uk.gov.hmrc.iossintermediaryregistrationstub.controllers.actions.DefaultAuthenticatedControllerComponents
-import uk.gov.hmrc.iossintermediaryregistrationstub.models.enrolments.SubscriberRequest
+import uk.gov.hmrc.iossintermediaryregistrationstub.models.enrolments.{EACDEnrolment, EACDEnrolments, EACDIdentifiers, SubscriberRequest}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.{Clock, LocalDateTime}
 import javax.inject.Inject
 
 class EnrolmentsController @Inject()(
                                       cc: DefaultAuthenticatedControllerComponents,
-                                      registrationConnector: RegistrationConnector
+                                      registrationConnector: RegistrationConnector,
+                                      clock: Clock
                                     ) extends BackendController(cc) with Logging {
 
   def confirm(subscriptionId: String): Action[SubscriberRequest] = Action(parse.json[SubscriberRequest]) {
@@ -47,6 +49,19 @@ class EnrolmentsController @Inject()(
       else {
         BadRequest(Json.toJson(s"Bad Request - missing $AUTHORIZATION"))
       }
+  }
+
+  def es2(userId: String): Action[AnyContent] = cc.auth() { request =>
+    val enrolmentsToReturn = request.iossNumber match {
+      case Some("IM9007230000") =>
+        EACDEnrolments(Seq(
+          EACDEnrolment("HMRC-IOSS-ORG", "Activated", Some(LocalDateTime.now(clock).minusMonths(6)), Seq(EACDIdentifiers("IOSSNumber", "IM9006230000"))),
+          EACDEnrolment("HMRC-IOSS-ORG", "Activated", Some(LocalDateTime.now(clock).minusMonths(3)), Seq(EACDIdentifiers("IOSSNumber", "IM9007230000")))
+        ))
+      case _ =>
+        EACDEnrolments(Seq(EACDEnrolment("HMRC-IOSS-ORG", "Activated", Some(LocalDateTime.now(clock)), Seq(EACDIdentifiers("IOSSNumber", request.iossNumber.get)))))
+    }
+    Ok(Json.toJson(enrolmentsToReturn))
   }
 
 }

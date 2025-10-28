@@ -11,3 +11,5 @@ PUT         /subscriptions/:subscriptionId/subscriber                 uk.gov.hmr
 GET         /vec/iossregistration/viewreg/v1/:intermediaryNumber      uk.gov.hmrc.iossintermediaryregistrationstub.controllers.RegistrationController.getDisplayRegistration(intermediaryNumber: String)
 
 PUT         /vec/iossregistration/amendregistration/v1                uk.gov.hmrc.iossintermediaryregistrationstub.controllers.RegistrationController.amendRegistration
+
+GET         /enrolment-store/users/:userId/enrolments                 uk.gov.hmrc.iossintermediaryregistrationstub.controllers.EnrolmentsController.es2(userId: String)
